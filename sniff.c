@@ -9,23 +9,18 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-/* default snap length (maxium bytes per packet to capture) */
+
 #define SNAP_LEN 1518
-
-/* ethernet headers are always exactly 14 bytes [1] */
 #define SIZE_ETHERNET 14
-
-/* Ethernet addresses are 6 bytes */
 #define ETHER_ADDR_LEN 6
 
-/* Ethernet header */
 struct sniff_ethernet {
     u_char ether_dhost[ETHER_ADDR_LEN]; /* destination host address */
     u_char ether_shost[ETHER_ADDR_LEN]; /* source host address */
     u_short ether_type;                  /* IP? ARP? RARP? etc */
 };
 
-/* IP header */
+
 struct sniff_ip {
     u_char ip_vhl;                      /* version << 4 | header length >> 2 */
     u_char ip_tos;                      /* type of service */
@@ -44,7 +39,7 @@ struct sniff_ip {
 #define     IP_HL(ip)    (((ip)->ip_vhl) & 0x0f)
 #define     IP_V(ip)     (((ip)->ip_vhl) >> 4)
 
-/* TCP header */
+
 typedef u_int tcp_seq;
 
 struct sniff_tcp {
@@ -73,11 +68,11 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 
 void print_packet(const u_char *payload,int len);
 
-
+//print the contents of the packet
 void print_packet(const u_char *payload,int len){
            
     const u_char *ch = payload;
-    define/compute tcp header offset 
+    
     if(len <= 0)
         return;
     //this loop prints the character if it exists
@@ -92,19 +87,17 @@ void print_packet(const u_char *payload,int len){
     return;
 }
 
-/*
- * dissect/print packet
- */
+//opens packet
 void got_packet(u_char *args,const struct pcap_pkthdr *header,const u_char *packet)
 {
-    static int count = 1;                      /* packet counter */
+    static int count = 1;                      // Packet Counter
     
-    /* declare pointers to packet headers */
-    const struct sniff_ethernet *ethernet;     /* The ethernet heaer
-                                                  */
-    const struct sniff_ip *ip;                 /* The IP header */
-    const struct sniff_tcp *tcp;               /* The TCP header */
-    const char *payload;                       /* Packet payload */
+    //initializing the packed header pointers
+    const struct sniff_ethernet *ethernet;     // Ethernet header
+                                                  
+    const struct sniff_ip *ip;                 // IP header 
+    const struct sniff_tcp *tcp;               // TCP header 
+    const char *payload;                       // Packet 
 
     int size_ip;
     int size_tcp;
@@ -127,8 +120,8 @@ void got_packet(u_char *args,const struct pcap_pkthdr *header,const u_char *pack
     }
     
     // prints the up addresses
-    printf("From: %s\n", inet_ntoa(ip->ip_src));
-    printf("To: %s\n", inet_ntoa(ip->ip_dst));
+    printf("Source: %s\n", inet_ntoa(ip->ip_src));
+    printf("Destination: %s\n", inet_ntoa(ip->ip_dst));
 
  
 
@@ -140,8 +133,8 @@ void got_packet(u_char *args,const struct pcap_pkthdr *header,const u_char *pack
         return;
     }
 
-    printf("Src port: %d\n",ntohs(tcp->th_sport));
-    printf("Dst port: %d\n",ntohs(tcp->th_dport));
+    printf("Source Port: %d\n",ntohs(tcp->th_sport));
+    printf("Destination Port: %d\n",ntohs(tcp->th_dport));
 
     // finds the offset for the payload
     payload = (u_char *)(packet+SIZE_ETHERNET+size_ip+size_tcp);
@@ -161,7 +154,9 @@ int main(){
   pcap_t *handle;
   char errbuf[PCAP_ERRBUF_SIZE];
   struct bpf_program fp;
-  char filter_exp[] = "tcp";
+  //char filter_exp[] = "tcp";
+  //char filter_exp[] = "tcp 151.101.41.140 portrange 100-400";
+  char filter_exp[] = "icmp and (src host 192.168.189.128 and dst host 192.168.189.1)";
   bpf_u_int32 net;
 
 
